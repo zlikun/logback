@@ -58,14 +58,17 @@ public class ContextSelectorStaticBinder {
         } else if (this.key != key) {
             throw new IllegalAccessException("Only certain classes can access this method.");
         }
-
+        // LOGBACK_CONTEXT_SELECTOR = "logback.ContextSelector"
         String contextSelectorStr = OptionHelper.getSystemProperty(ClassicConstants.LOGBACK_CONTEXT_SELECTOR);
         if (contextSelectorStr == null) {
+            // 使用默认 ContextSelector
             contextSelector = new DefaultContextSelector(defaultLoggerContext);
         } else if (contextSelectorStr.equals("JNDI")) {
+            // 使用JNDI ContextSelector，启动时指定运行参数："-Dlogback.ContextSelector=JNDI""
             // if jndi is specified, let's use the appropriate class
             contextSelector = new ContextJNDISelector(defaultLoggerContext);
         } else {
+            // 自定义 ContextSelector，运行方式参考：JNDI，指定的logback.ContextSelector参数值应为完整ContextSelector实现类名
             contextSelector = dynamicalContextSelector(defaultLoggerContext, contextSelectorStr);
         }
     }

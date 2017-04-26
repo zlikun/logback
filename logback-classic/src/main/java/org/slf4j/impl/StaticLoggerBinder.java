@@ -52,7 +52,7 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     private static Object KEY = new Object();
 
     static {
-        SINGLETON.init();
+        SINGLETON.init();   // 初始化 defaultLoggerContext
     }
 
     private boolean initialized = false;
@@ -89,6 +89,9 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
             if (!StatusUtil.contextHasStatusListener(defaultLoggerContext)) {
                 StatusPrinter.printInCaseOfErrorsOrWarnings(defaultLoggerContext);
             }
+            // 上下文选择器初始化，KEY用于控制初始化代码只执行一次(锁)，初始化：ContextSelectorStaticBinder#contextSelector实例
+            // 大多数情况下使用默认实现(JNDI、自定义很少用到，至少本人很少使用)，参考：#getLoggerFactory()中return contextSelectorBinder.getContextSelector().getLoggerContext();
+            // 实际返回defaultLoggerContext对象
             contextSelectorBinder.init(defaultLoggerContext, KEY);
             initialized = true;
         } catch (Exception t) { // see LOGBACK-1159
