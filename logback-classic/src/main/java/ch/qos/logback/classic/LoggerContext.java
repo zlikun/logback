@@ -72,14 +72,20 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
     private List<String> frameworkPackages;
 
     public LoggerContext() {
+        // ch.qos.logback.core.ContextBase 填充 objectMap
         super();
+        // 使用ConcurrentHashMap缓存Logger实例，避免Logger实例过多
         this.loggerCache = new ConcurrentHashMap<String, Logger>();
 
         this.loggerContextRemoteView = new LoggerContextVO(this);
+        // Logger.ROOT_LOGGER_NAME = "ROOT"，初始化根Logger
         this.root = new Logger(Logger.ROOT_LOGGER_NAME, null, this);
+        // 设置根Logger默认日志级别为DEBUG级别
         this.root.setLevel(Level.DEBUG);
+        // 缓存根Logger
         loggerCache.put(Logger.ROOT_LOGGER_NAME, root);
         initEvaluatorMap();
+        // 初始化Logger计数器
         size = 1;
         this.frameworkPackages = new ArrayList<String>();
     }
@@ -140,19 +146,24 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
         // in between as well (if they don't already exist)
         String childName;
         while (true) {
+            // 获取`.`或`$`索引值
             int h = LoggerNameUtil.getSeparatorIndexOf(name, i);
             if (h == -1) {
-                childName = name;
+                childName = name;                      // 如果不包含指定分隔符，则name直接作为Logger的名称使用
             } else {
-                childName = name.substring(0, h);
+                childName = name.substring(0, h);      // 如果包含，则从左边开始取分隔字符串作为Logger的名称，循环向后取得每一段的对应Logger
             }
             // move i left of the last point
             i = h + 1;
             synchronized (logger) {
+                // logger.getChildByName(childName) 内部遍历查找当前Logger(初始为root)的子Logger
                 childLogger = logger.getChildByName(childName);
                 if (childLogger == null) {
+                    // 如果未找到，则创建该Logger，并加入到当前Logger的子Logger中
                     childLogger = logger.createChildByName(childName);
+                    // 将创建的Logger加入到缓存中
                     loggerCache.put(childName, childLogger);
+                    // 自增Logger计数
                     incSize();
                 }
             }

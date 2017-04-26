@@ -64,7 +64,7 @@ public class ContextSelectorStaticBinder {
             // 使用默认 ContextSelector
             contextSelector = new DefaultContextSelector(defaultLoggerContext);
         } else if (contextSelectorStr.equals("JNDI")) {
-            // 使用JNDI ContextSelector，启动时指定运行参数："-Dlogback.ContextSelector=JNDI""
+            // 使用JNDI ContextSelector，启动时指定运行参数："-Dlogback.ContextSelector=JNDI"
             // if jndi is specified, let's use the appropriate class
             contextSelector = new ContextJNDISelector(defaultLoggerContext);
         } else {

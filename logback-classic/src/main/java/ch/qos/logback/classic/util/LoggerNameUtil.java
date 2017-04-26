@@ -30,7 +30,7 @@ public class LoggerNameUtil {
     /**
      * Get the position of the separator character, if any, starting at position
      * 'fromIndex'.
-     *
+     * `$`应该用于分隔内部内时使用
      * @param name
      * @param fromIndex
      * @return
