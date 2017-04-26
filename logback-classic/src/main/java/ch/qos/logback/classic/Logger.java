@@ -357,6 +357,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
         Logger childLogger;
         childLogger = new Logger(childName, this, this.loggerContext);
         childrenList.add(childLogger);
+        // 使用父级日志级别初始化当前创建Logger的日志级别
         childLogger.effectiveLevelInt = this.effectiveLevelInt;
         return childLogger;
     }
