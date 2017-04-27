@@ -81,6 +81,7 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     void init() {
         try {
             try {
+                // 初始化日志配置
                 new ContextInitializer(defaultLoggerContext).autoConfig();
             } catch (JoranException je) {
                 Util.report("Failed to auto configure default logger context", je);

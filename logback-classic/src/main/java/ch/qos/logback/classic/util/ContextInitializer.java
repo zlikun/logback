@@ -70,6 +70,7 @@ public class ContextInitializer {
                 sm.add(new ErrorStatus("Groovy classes are not available on the class path. ABORTING INITIALIZATION.", loggerContext));
             }
         } else if (urlString.endsWith("xml")) {
+            // Joran 是 logback 使用的一个配置加载库
             JoranConfigurator configurator = new JoranConfigurator();
             configurator.setContext(loggerContext);
             configurator.doConfigure(url);
@@ -145,12 +146,15 @@ public class ContextInitializer {
 
     public void autoConfig() throws JoranException {
         StatusListenerConfigHelper.installIfAsked(loggerContext);
+        // 加载配置文件URL，默认加载顺序：logback-test.xml、logback.groovy、logback.xml
         URL url = findURLOfDefaultConfigurationFile(true);
         if (url != null) {
+            // 根据URL配置Logger
             configureByResource(url);
         } else {
             Configurator c = EnvUtil.loadFromServiceLoader(Configurator.class);
             if (c != null) {
+                // 通过SPI机制加载日志配置
                 try {
                     c.setContext(loggerContext);
                     c.configure(loggerContext);
@@ -159,6 +163,7 @@ public class ContextInitializer {
                                     .getCanonicalName() : "null"), e);
                 }
             } else {
+                // 使用默认配置
                 BasicConfigurator basicConfigurator = new BasicConfigurator();
                 basicConfigurator.setContext(loggerContext);
                 basicConfigurator.configure(loggerContext);

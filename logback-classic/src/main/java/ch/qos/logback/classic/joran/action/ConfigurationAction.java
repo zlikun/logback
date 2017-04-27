@@ -56,12 +56,16 @@ public class ConfigurationAction extends Action {
         if (OptionHelper.isEmpty(debugAttrib) || debugAttrib.equalsIgnoreCase("false") || debugAttrib.equalsIgnoreCase("null")) {
             addInfo(INTERNAL_DEBUG_ATTR + " attribute not set");
         } else {
+            // 如果`debug`参数取值为非false、非null字符串，表示开启DEBUG模式
             StatusListenerConfigHelper.addOnConsoleListenerInstance(context, new OnConsoleStatusListener());
         }
 
+        // 扫描属性加载
         processScanAttrib(ic, attributes);
 
         LoggerContext lc = (LoggerContext) context;
+
+        // packagingData 做什么的？ @2017/4/27 By zlikun
         boolean packagingData = OptionHelper.toBoolean(ic.subst(attributes.getValue(PACKAGING_DATA_ATTR)), LoggerContext.DEFAULT_PACKAGING_DATA);
         lc.setPackagingDataEnabled(packagingData);
 
@@ -88,23 +92,32 @@ public class ConfigurationAction extends Action {
     }
 
     void processScanAttrib(InterpretationContext ic, Attributes attributes) {
+        // SCAN_ATTR = "scan" ，是否启动扫描(用于动态加载日志配置文件)
+        // 取值非空、非false即表示开启
         String scanAttrib = ic.subst(attributes.getValue(SCAN_ATTR));
         if (!OptionHelper.isEmpty(scanAttrib) && !"false".equalsIgnoreCase(scanAttrib)) {
 
+            // 使用ScheduledExecutorService周期执行扫描配置文件变更
             ScheduledExecutorService scheduledExecutorService = context.getScheduledExecutorService();
+            // 获取日志文件URL，如果未得到该路径，那么扫描将不生效(输出警告日志)
             URL mainURL = ConfigurationWatchListUtil.getMainWatchURL(context);
             if (mainURL == null) {
                 addWarn("Due to missing top level configuration file, reconfiguration on change (configuration file scanning) cannot be done.");
                 return;
             }
+
+            // 重新加载配置任务
             ReconfigureOnChangeTask rocTask = new ReconfigureOnChangeTask();
             rocTask.setContext(context);
 
             context.putObject(CoreConstants.RECONFIGURE_ON_CHANGE_TASK, rocTask);
 
+            // SCAN_PERIOD_ATTR = "scanPeriod" ，配置扫描周期，可以指定：$number seconds
+            // 可选时间单位："(|milli(second)?|second(e)?|minute|hour|day)s?"
             String scanPeriodAttrib = ic.subst(attributes.getValue(SCAN_PERIOD_ATTR));
+            // 解析结构化周期对象
             Duration duration = getDuration(scanAttrib, scanPeriodAttrib);
-
+            // 如果未指定周期，扫描配置将不生效
             if (duration == null) {
                 return;
             }
@@ -115,7 +128,8 @@ public class ConfigurationAction extends Action {
             // However, scan can be active if mainURL is set. Otherwise, when changes are detected
             // the top level config file cannot be accessed.
             addInfo("Setting ReconfigureOnChangeTask scanning period to " + duration);
- 
+
+            // 启动任务
             ScheduledFuture<?> scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(rocTask, duration.getMilliseconds(), duration.getMilliseconds(),
                             TimeUnit.MILLISECONDS);
             context.addScheduledFuture(scheduledFuture);
