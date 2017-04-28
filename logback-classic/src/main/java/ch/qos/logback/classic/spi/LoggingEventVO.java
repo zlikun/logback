@@ -99,6 +99,10 @@ public class LoggingEventVO implements ILoggingEvent, Serializable {
         return message;
     }
 
+    /**
+     * 将消息与参数拼装起来
+     * @return
+     */
     public String getFormattedMessage() {
         if (formattedMessage != null) {
             return formattedMessage;

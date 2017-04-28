@@ -33,6 +33,7 @@ abstract public class FormattingConverter<E> extends Converter<E> {
 
     @Override
     final public void write(StringBuilder buf, E event) {
+        // 组装日志内容，参考：MessageConverter
         String s = convert(event);
 
         if (formattingInfo == null) {

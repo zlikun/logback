@@ -102,7 +102,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         if (!isStarted()) {
             return;
         }
-
+        // 向下传递append操作
         subAppend(eventObject);
     }
 
@@ -237,7 +237,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
             // converter. Converters assume that they are in a synchronized block.
             // lock.lock();
 
-            // 执行Encoder#encode(E)方法，生成日志字节数组
+            // 执行Encoder#encode(E)方法，生成日志字节数组(组装消息，包含模板装配等)
             byte[] byteArray = this.encoder.encode(event);
             // 输出字节数据，由子类实现决定输出到具体终端
             writeBytes(byteArray);

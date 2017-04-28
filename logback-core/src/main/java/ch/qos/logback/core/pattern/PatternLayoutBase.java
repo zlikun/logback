@@ -112,6 +112,7 @@ abstract public class PatternLayoutBase<E> extends LayoutBase<E> {
         StringBuilder strBuilder = new StringBuilder(INTIAL_STRING_BUILDER_SIZE);
         Converter<E> c = head;
         while (c != null) {
+            // 实际组装内容逻辑，参考：FormattingConverter
             c.write(strBuilder, event);
             c = c.getNext();
         }

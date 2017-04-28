@@ -112,6 +112,7 @@ public class LayoutWrappingEncoder<E> extends EncoderBase<E> {
     }
 
     public byte[] encode(E event) {
+        // 内部使用Layout组件，组装日志内容，参考：PatternLayout
         String txt = layout.doLayout(event);
         return convertToBytes(txt);
     }

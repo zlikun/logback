@@ -255,6 +255,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
         int writes = 0;
         // Logger向上回溯(如果上层指定了不同的Appender，那么日志将被输出到多个Appender)，如果additive为false，则终止回溯
         for (Logger l = this; l != null; l = l.parent) {
+            // appendLoopOnAppenders内部包含执行append操作(输出日志)
             writes += l.appendLoopOnAppenders(event);
             if (!l.additive) {
                 break;
@@ -387,16 +388,20 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
 
     private void filterAndLog_1(final String localFQCN, final Marker marker, final Level level, final String msg, final Object param, final Throwable t) {
 
+        // 执行过滤器链
         final FilterReply decision = loggerContext.getTurboFilterChainDecision_1(marker, this, level, msg, param, t);
 
         if (decision == FilterReply.NEUTRAL) {
+            // 如果过滤器返回NEUTRAL，判断日志级别是否符合条件
             if (effectiveLevelInt > level.levelInt) {
                 return;
             }
         } else if (decision == FilterReply.DENY) {
+            // 如果过滤器返回DENY，直接返回(忽略日志)
             return;
         }
 
+        // 构建Events和Append，准备输出日志
         buildLoggingEventAndAppend(localFQCN, marker, level, msg, new Object[] { param }, t);
     }
 
@@ -418,8 +423,11 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
 
     private void buildLoggingEventAndAppend(final String localFQCN, final Marker marker, final Level level, final String msg, final Object[] params,
                     final Throwable t) {
+        // 构建Events
         LoggingEvent le = new LoggingEvent(localFQCN, this, level, msg, t, params);
+        // TODO Marker有什么用？
         le.setMarker(marker);
+        // 执行append操作
         callAppenders(le);
     }
 
