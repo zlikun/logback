@@ -83,6 +83,10 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         }
     }
 
+    /**
+     * 该方法指定Encoder的实现为LayoutWrappingEncoder，所以与 #setEncoder()方法是冲突的(发生覆盖)
+     * @param layout
+     */
     public void setLayout(Layout<E> layout) {
         addWarn("This appender no longer admits a layout as a sub-component, set an encoder instead.");
         addWarn("To ensure compatibility, wrapping your layout in LayoutWrappingEncoder.");
@@ -135,6 +139,9 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         }
     }
 
+    /**
+     * 个人理解：关闭之前将剩余字节(如果有的话，即：非空)输出到终端，相当于IO中的flush操作
+     */
     void encoderClose() {
         if (encoder != null && this.outputStream != null) {
             try {
@@ -161,7 +168,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         lock.lock();
         try {
             // close any previously opened output stream
-            closeOutputStream();
+            closeOutputStream();    // 用于如果是重设OutputStream，将关闭之前的OutputStream
             this.outputStream = outputStream;
             if (encoder == null) {
                 addWarn("Encoder has not been set. Cannot invoke its init method.");
@@ -177,6 +184,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
     void encoderInit() {
         if (encoder != null && this.outputStream != null) {
             try {
+                // TODO 没太明白Encoder中的headerBytes()和footerBytes()
                 byte[] header = encoder.headerBytes();
                 writeBytes(header);
             } catch (IOException ioe) {
@@ -197,6 +205,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         lock.lock();
         try {
             this.outputStream.write(byteArray);
+            // 控制是否立即刷新
             if (immediateFlush) {
                 this.outputStream.flush();
             }
@@ -218,6 +227,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
             return;
         }
         try {
+            // TODO 延迟处理？
             // this step avoids LBCLASSIC-139
             if (event instanceof DeferredProcessingAware) {
                 ((DeferredProcessingAware) event).prepareForDeferredProcessing();
@@ -227,7 +237,9 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
             // converter. Converters assume that they are in a synchronized block.
             // lock.lock();
 
+            // 执行Encoder#encode(E)方法，生成日志字节数组
             byte[] byteArray = this.encoder.encode(event);
+            // 输出字节数据，由子类实现决定输出到具体终端
             writeBytes(byteArray);
 
         } catch (IOException ioe) {

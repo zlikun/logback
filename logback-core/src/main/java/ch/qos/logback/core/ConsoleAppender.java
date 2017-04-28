@@ -43,6 +43,7 @@ public class ConsoleAppender<E> extends OutputStreamAppender<E> {
     private final static String WindowsAnsiOutputStream_CLASS_NAME = "org.fusesource.jansi.WindowsAnsiOutputStream";
 
     /**
+     * 通过<target>System.err</target>标签指定输出流，可选取值参考：ch.qos.logback.core.joran.spi.ConsoleTarget
      * Sets the value of the <b>Target</b> option. Recognized values are
      * "System.out" and "System.err". Any other value will be ignored.
      */
@@ -78,10 +79,16 @@ public class ConsoleAppender<E> extends OutputStreamAppender<E> {
         if (EnvUtil.isWindows() && withJansi) {
             targetStream = getTargetStreamForWindows(targetStream);
         }
+        // 设置输出流：System.out / System.err
         setOutputStream(targetStream);
         super.start();
     }
 
+    /**
+     * 个人理解：应该是针对Windows系统做的优化
+     * @param targetStream
+     * @return
+     */
     private OutputStream getTargetStreamForWindows(OutputStream targetStream) {
         try {
             addInfo("Enabling JANSI WindowsAnsiOutputStream for the console.");

@@ -61,6 +61,8 @@ abstract public class UnsynchronizedAppenderBase<E> extends ContextAwareBase imp
         // WARNING: The guard check MUST be the first statement in the
         // doAppend() method.
 
+        // TODO 相同线程上，输出日志将排队，这里用于控制重复写入(但怎么会重复写入？)
+        // TODO 这里的机制有没有可能导致丢日志？
         // prevent re-entry.
         if (Boolean.TRUE.equals(guard.get())) {
             return;
@@ -69,6 +71,7 @@ abstract public class UnsynchronizedAppenderBase<E> extends ContextAwareBase imp
         try {
             guard.set(Boolean.TRUE);
 
+            // 如果使用当前Appender未启动，输出`ALLOWED_REPEATS`次后，将输出警告信息
             if (!this.started) {
                 if (statusRepeatCount++ < ALLOWED_REPEATS) {
                     addStatus(new WarnStatus("Attempted to append to non started appender [" + name + "].", this));
@@ -76,14 +79,17 @@ abstract public class UnsynchronizedAppenderBase<E> extends ContextAwareBase imp
                 return;
             }
 
+            // 如果Filter链某个环节上返回`DENY`，那么将不输出日志
             if (getFilterChainDecision(eventObject) == FilterReply.DENY) {
                 return;
             }
 
+            // 实际执行日志输出逻辑，由子类实现，参考：ch.qos.logback.core.ConsoleAppender 和 ch.qos.logback.core.FileAppender 等实现
             // ok, we now invoke derived class' implementation of append
             this.append(eventObject);
 
         } catch (Exception e) {
+            // 同一个Appender上输出日志出错超过`ALLOWED_REPEATS`(含)次数，将输出Error信息
             if (exceptionCount++ < ALLOWED_REPEATS) {
                 addError("Appender [" + name + "] failed to append.", e);
             }

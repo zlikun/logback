@@ -104,6 +104,8 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
         if (discardingThreshold == UNDEFINED)
             discardingThreshold = queueSize / 5;
         addInfo("Setting discardingThreshold to " + discardingThreshold);
+
+        // 设定Worker为守护线程，异步执行刷新日志任务
         worker.setDaemon(true);
         worker.setName("AsyncAppender-Worker-" + getName());
         // make sure this instance is marked as "started" before staring the worker Thread
@@ -130,6 +132,7 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
         try {
             interruptUtil.maskInterruptFlag();
 
+            // 主线程待worker线程maxFlushTime时间
             worker.join(maxFlushTime);
 
             // check to see if the thread ended and if not add a warning message
@@ -154,6 +157,7 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
 
     @Override
     protected void append(E eventObject) {
+        // 当剩余容量小于设定阈值并且eventObject的级别小于等于INFO时，丢弃该条日志
         if (isQueueBelowDiscardingThreshold() && isDiscardable(eventObject)) {
             return;
         }
@@ -167,8 +171,11 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
 
     private void put(E eventObject) {
         if (neverBlock) {
+            // 如果设定永不阻塞，那么将正常插入元素，不抛出异常(offer插入成功返回true/false)
+            // 但这里队列如果满，插入元素将被忽略，所以实际造成了丢日志
             blockingQueue.offer(eventObject);
         } else {
+            // 当队列满时，阻塞队列
             putUninterruptibly(eventObject);
         }
     }
@@ -286,6 +293,7 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
             // loop while the parent is started
             while (parent.isStarted()) {
                 try {
+                    // 取出元素，执行写入日志操作
                     E e = parent.blockingQueue.take();
                     aai.appendLoopOnAppenders(e);
                 } catch (InterruptedException ie) {
@@ -295,6 +303,7 @@ public class AsyncAppenderBase<E> extends UnsynchronizedAppenderBase<E> implemen
 
             addInfo("Worker thread will flush remaining events before exiting. ");
 
+            // 处理队列剩余数据，处理时间不超过maxFlushTime指定的时间
             for (E e : parent.blockingQueue) {
                 aai.appendLoopOnAppenders(e);
                 parent.blockingQueue.remove(e);

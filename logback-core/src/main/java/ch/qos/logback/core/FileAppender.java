@@ -124,6 +124,7 @@ public class FileAppender<E> extends OutputStreamAppender<E> {
             } else {
                 // file should be opened only if collision free
                 try {
+                    // 打开文件(日志)
                     openFile(getFile());
                 } catch (java.io.IOException e) {
                     errors++;
@@ -150,6 +151,10 @@ public class FileAppender<E> extends OutputStreamAppender<E> {
         map.remove(getName());
     }
 
+    /**
+     * 检查文件是否冲突(重名)
+     * @return
+     */
     protected boolean checkForFileCollisionInPreviousFileAppenders() {
         boolean collisionsDetected = false;
         if (fileName == null) {
@@ -231,7 +236,11 @@ public class FileAppender<E> extends OutputStreamAppender<E> {
     public void setAppend(boolean append) {
         this.append = append;
     }
-    
+
+    /**
+     * 设置文件缓冲区大小，取值单位参考：ch.qos.logback.core.util.FileSize
+     * @param bufferSize
+     */
     public void setBufferSize(FileSize bufferSize) {
         addInfo("Setting bufferSize to ["+bufferSize.toString()+"]");
         this.bufferSize = bufferSize;

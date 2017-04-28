@@ -49,6 +49,11 @@ public class TimeBasedArchiveRemover extends ContextAwareBase implements Archive
     }
 
     int callCount = 0;
+
+    /**
+     * 按日期清理
+     * @param now
+     */
     public void clean(Date now) {
  
         long nowInMillis = now.getTime();
@@ -94,6 +99,10 @@ public class TimeBasedArchiveRemover extends ContextAwareBase implements Archive
         }
     }
 
+    /**
+     * 按容量清理
+     * @param now
+     */
     void capTotalSize(Date now) {
         long totalSize = 0;
         long totalRemoved = 0;

@@ -253,6 +253,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
      */
     public void callAppenders(ILoggingEvent event) {
         int writes = 0;
+        // Logger向上回溯(如果上层指定了不同的Appender，那么日志将被输出到多个Appender)，如果additive为false，则终止回溯
         for (Logger l = this; l != null; l = l.parent) {
             writes += l.appendLoopOnAppenders(event);
             if (!l.additive) {

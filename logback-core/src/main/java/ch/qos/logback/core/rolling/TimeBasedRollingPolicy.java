@@ -64,6 +64,7 @@ public class TimeBasedRollingPolicy<E> extends RollingPolicyBase implements Trig
         // set the LR for our utility object
         renameUtil.setContext(this.context);
 
+        // 文件名模板字符串
         // find out period from the filename pattern
         if (fileNamePatternStr != null) {
             fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
@@ -74,14 +75,17 @@ public class TimeBasedRollingPolicy<E> extends RollingPolicyBase implements Trig
             throw new IllegalStateException(FNP_NOT_SET + CoreConstants.SEE_FNP_NOT_SET);
         }
 
+        // 压缩处理
         compressor = new Compressor(compressionMode);
         compressor.setContext(context);
 
+        // 文件压缩后缀：.zip / .gz
         // wcs : without compression suffix
         fileNamePatternWithoutCompSuffix = new FileNamePattern(Compressor.computeFileNameStrWithoutCompSuffix(fileNamePatternStr, compressionMode), this.context);
 
         addInfo("Will use the pattern " + fileNamePatternWithoutCompSuffix + " for the active file");
 
+        // 使用ZIP格式压缩日志文件
         if (compressionMode == CompressionMode.ZIP) {
             String zipEntryFileNamePatternStr = transformFileNamePattern2ZipEntry(fileNamePatternStr);
             zipEntryFileNamePattern = new FileNamePattern(zipEntryFileNamePatternStr, context);
@@ -99,6 +103,7 @@ public class TimeBasedRollingPolicy<E> extends RollingPolicyBase implements Trig
             return;
         }
 
+        // 如果设置了最大历史归档数量，超过后，将从最早开始删除归档文件(异步)
         // the maxHistory property is given to TimeBasedRollingPolicy instead of to
         // the TimeBasedFileNamingAndTriggeringPolicy. This makes it more convenient
         // for the user at the cost of inconsistency here.

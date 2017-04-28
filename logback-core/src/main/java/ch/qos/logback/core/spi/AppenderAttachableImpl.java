@@ -47,6 +47,7 @@ public class AppenderAttachableImpl<E> implements AppenderAttachable<E> {
         int size = 0;
         final Appender<E>[] appenderArray = appenderList.asTypedArray();
         final int len = appenderArray.length;
+        // 执行Appender#doAppend()方法，这里使用列表表示一个Logger指定多个Appender情形
         for (int i = 0; i < len; i++) {
             appenderArray[i].doAppend(e);
             size++;

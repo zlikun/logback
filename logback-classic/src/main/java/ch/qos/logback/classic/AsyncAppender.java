@@ -35,6 +35,7 @@ public class AsyncAppender extends AsyncAppenderBase<ILoggingEvent> {
      * @return true if the event is of level TRACE, DEBUG or INFO false otherwise.
      */
     protected boolean isDiscardable(ILoggingEvent event) {
+        // 重写父类方法(直接返回false)，这里根据日志级别，忽略低于(包含)INFO级别的日志
         Level level = event.getLevel();
         return level.toInt() <= Level.INFO_INT;
     }
