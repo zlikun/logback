@@ -23,6 +23,7 @@ public class PatternLayoutEncoder extends PatternLayoutEncoderBase<ILoggingEvent
     public void start() {
         PatternLayout patternLayout = new PatternLayout();
         patternLayout.setContext(context);
+        // 将设置的pattern加入PatternLayout实例中，从而实现默认使用PatternLayout机制
         patternLayout.setPattern(getPattern());
         patternLayout.setOutputPatternAsHeader(outputPatternAsHeader);
         patternLayout.start();
