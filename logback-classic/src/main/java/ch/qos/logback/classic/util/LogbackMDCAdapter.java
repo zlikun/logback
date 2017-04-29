@@ -66,12 +66,19 @@ public class LogbackMDCAdapter implements MDCAdapter {
         return lastOp;
     }
 
+    /**
+     * 判断上一次操作是否为空或者是MAP_COPY_OPERATION
+     * @param lastOp
+     * @return
+     */
     private boolean wasLastOpReadOrNull(Integer lastOp) {
         return lastOp == null || lastOp.intValue() == MAP_COPY_OPERATION;
     }
 
     private Map<String, String> duplicateAndInsertNewMap(Map<String, String> oldMap) {
+        // 构造一个线程安全的MAP
         Map<String, String> newMap = Collections.synchronizedMap(new HashMap<String, String>());
+        // 如果旧的MAP存在，将旧的MAP填充到新MAP中
         if (oldMap != null) {
             // we don't want the parent thread modifying oldMap while we are
             // iterating over it
@@ -79,7 +86,7 @@ public class LogbackMDCAdapter implements MDCAdapter {
                 newMap.putAll(oldMap);
             }
         }
-
+        // 将新MAP作为MDC存储容器写入ThreadLocal中，并返回之
         copyOnThreadLocal.set(newMap);
         return newMap;
     }
@@ -99,14 +106,18 @@ public class LogbackMDCAdapter implements MDCAdapter {
         if (key == null) {
             throw new IllegalArgumentException("key cannot be null");
         }
-
+        // 此句代码说明MDC信息实际是由ThreadLocal来保存，所以单个线程中，属性是相互共享的
         Map<String, String> oldMap = copyOnThreadLocal.get();
+        // 返回上一次操作代码：WRITE_OPERATION(1)、MAP_COPY_OPERATION(2)，并设置为：WRITE_OPERATION
+        // 意为最近一次操作为：WRITE_OPERATION，后面逻辑将判断上一次操作
         Integer lastOp = getAndSetLastOperation(WRITE_OPERATION);
-
+        // 如果上一次操作为NULL或MAP_COPY_OPERATION，或者MDC中信息为空
         if (wasLastOpReadOrNull(lastOp) || oldMap == null) {
+            // 初始化MDC，并将本次传入键值对添加到新的MDC中
             Map<String, String> newMap = duplicateAndInsertNewMap(oldMap);
             newMap.put(key, val);
         } else {
+            // 直接将键值对添加到旧的MDC中
             oldMap.put(key, val);
         }
     }
@@ -119,12 +130,13 @@ public class LogbackMDCAdapter implements MDCAdapter {
         if (key == null) {
             return;
         }
+        // 如果MDC信息不存在，直接忽略删除操作
         Map<String, String> oldMap = copyOnThreadLocal.get();
         if (oldMap == null)
             return;
 
         Integer lastOp = getAndSetLastOperation(WRITE_OPERATION);
-
+        // 从MDC中删除KEY
         if (wasLastOpReadOrNull(lastOp)) {
             Map<String, String> newMap = duplicateAndInsertNewMap(oldMap);
             newMap.remove(key);
@@ -155,6 +167,7 @@ public class LogbackMDCAdapter implements MDCAdapter {
     }
 
     /**
+     * 将操作置为`MAP_COPY_OPERATION`仅有的地方，用途是什么呢？
      * Get the current thread's MDC as a map. This method is intended to be used
      * internally.
      */
@@ -190,6 +203,10 @@ public class LogbackMDCAdapter implements MDCAdapter {
         }
     }
 
+    /**
+     * 初始化MDC容器(覆盖)
+     * @param contextMap
+     */
     public void setContextMap(Map<String, String> contextMap) {
         lastOperation.set(WRITE_OPERATION);
 
